@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'macbrandon07@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidUser(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 2 && data.username.size() <= 60 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.fullName is string && data.fullName.size() <= 120 &&
+             data.phoneNumber is string && data.phoneNumber.size() <= 30 &&
+             data.isAdmin is bool;
+    }
+
+    function isValidAmbulance(data) {
+      return data.ambulanceId is string && data.ambulanceId.size() <= 60 &&
+             data.vehicleNumber is string && data.vehicleNumber.size() <= 30 &&
+             data.transportType in ['Road', 'Air'] &&
+             data.status in ['Available', 'Dispatched', 'In Transit', 'Maintenance'] &&
+             data.currentLocation is string && data.currentLocation.size() <= 200 &&
+             data.lastUpdated is string && data.lastUpdated.size() <= 100;
+    }
+
+    function isValidBooking(data) {
+      return data.bookingId is string && data.bookingId.size() <= 60 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.requestedTransport in ['Road', 'Air'] &&
+             data.pickupLocation is string && data.pickupLocation.size() <= 300 &&
+             data.destination is string && data.destination.size() <= 300 &&
+             data.medicalProblem is string && data.medicalProblem.size() <= 1000 &&
+             data.emergencyType is string && data.emergencyType.size() <= 100 &&
+             data.currentStatus in ['Pending', 'Confirmed', 'Dispatched', 'In Transit', 'Arrived', 'Complete', 'Cancelled'] &&
+             (!('patientHistory' in data) || data.patientHistory == null || (data.patientHistory is string && data.patientHistory.size() <= 1000)) &&
+             (!('ambulanceId' in data) || data.ambulanceId == null || (data.ambulanceId is string && data.ambulanceId.size() <= 60)) &&
+             (!('estimatedArrival' in data) || data.estimatedArrival == null || (data.estimatedArrival is string && data.estimatedArrival.size() <= 60));
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       (incoming().isAdmin == false || isAdmin()) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidUser(incoming());
+      allow update: if isSignedIn() && isValidId(userId) &&
+                       (request.auth.uid == userId || isAdmin()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (incoming().isAdmin == existing().isAdmin || isAdmin()) &&
+                       isValidUser(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Ambulances
+    match /ambulances/{ambulanceId} {
+      allow get, list: if isSignedIn();
+      allow create: if isAdmin() && isValidId(ambulanceId) && isValidAmbulance(incoming());
+      allow update: if isAdmin() && isValidId(ambulanceId) && isValidAmbulance(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Bookings
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && isValidId(bookingId) && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(bookingId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().currentStatus == 'Pending' &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidBooking(incoming());
+      allow update: if isSignedIn() && isValidId(bookingId) &&
+                       (resource.data.userId == request.auth.uid || isAdmin()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidBooking(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Admins registry
+    match /admins/{userId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+  }
+}

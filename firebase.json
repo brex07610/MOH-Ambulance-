@@ -1,0 +1,16 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-android-mohambul-c332b7d5-35b0-4f3c-91a3-a729875c4260",
+      "rules": "firestore.rules"
+    }
+  ],
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8085
+    }
+  }
+}

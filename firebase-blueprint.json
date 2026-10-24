@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile for citizens and emergency dispatch personnel",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique user ID matching Firebase Auth UID"
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique username"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Citizen or dispatcher full name"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Primary contact number"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Whether the user has emergency dispatch administrative rights"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "username", "email", "fullName", "phoneNumber", "isAdmin", "createdAt"]
+    },
+    "Ambulance": {
+      "title": "Ambulance",
+      "description": "Emergency ambulance vehicle in the Ministry of Health fleet",
+      "type": "object",
+      "properties": {
+        "ambulanceId": {
+          "type": "string",
+          "description": "Unique ambulance fleet identifier"
+        },
+        "vehicleNumber": {
+          "type": "string",
+          "description": "Vehicle registration or callsign"
+        },
+        "transportType": {
+          "type": "string",
+          "enum": ["Road", "Air"],
+          "description": "Vehicle type: Road ALS ambulance or Air evacuation helicopter"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Available", "Dispatched", "In Transit", "Maintenance"],
+          "description": "Current availability status"
+        },
+        "currentLocation": {
+          "type": "string",
+          "description": "Current station base or live telemetry location"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp string of last telemetry update"
+        }
+      },
+      "required": ["ambulanceId", "vehicleNumber", "transportType", "status", "currentLocation", "lastUpdated"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Emergency ambulance request and dispatch record",
+      "type": "object",
+      "properties": {
+        "bookingId": {
+          "type": "string",
+          "description": "Unique emergency booking identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the citizen requesting emergency transport"
+        },
+        "ambulanceId": {
+          "type": "string",
+          "description": "Assigned ambulance fleet identifier (optional)"
+        },
+        "requestedTransport": {
+          "type": "string",
+          "enum": ["Road", "Air"],
+          "description": "Requested transport mode"
+        },
+        "pickupLocation": {
+          "type": "string",
+          "description": "Patient pickup street address or GPS pin"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Receiving hospital or trauma centre"
+        },
+        "medicalProblem": {
+          "type": "string",
+          "description": "Patient medical condition and reported urgency"
+        },
+        "emergencyType": {
+          "type": "string",
+          "description": "Emergency classification category"
+        },
+        "patientHistory": {
+          "type": "string",
+          "description": "Relevant patient medical history"
+        },
+        "bookingTime": {
+          "type": "string",
+          "description": "Display timestamp string"
+        },
+        "currentStatus": {
+          "type": "string",
+          "enum": ["Pending", "Confirmed", "Dispatched", "In Transit", "Arrived", "Complete", "Cancelled"],
+          "description": "Current emergency transport lifecycle state"
+        },
+        "estimatedArrival": {
+          "type": "string",
+          "description": "Estimated arrival time or duration"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["bookingId", "userId", "requestedTransport", "pickupLocation", "destination", "medicalProblem", "emergencyType", "currentStatus", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Citizen and dispatcher user profiles"
+    },
+    "/ambulances/{ambulanceId}": {
+      "schema": "Ambulance",
+      "description": "Emergency vehicle fleet directory"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Emergency calls and ambulance bookings"
+    }
+  }
+}

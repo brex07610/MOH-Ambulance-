@@ -1,0 +1,6 @@
+{
+  "name": "MOH Ambulance",
+  "description": "Ministry of Health Emergency Ambulance Dispatch and Patient Booking System with live fleet tracking, quick SOS booking, and dispatch management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
